@@ -1,6 +1,6 @@
 from objeto import objeto
 import random
-from perceptronLogica import Perceptron
+import numpy as np
 
 #Funcion para crear objetos--------------------------------------------------------------
 def crear_objetos(cantidadObjetos, entrenamiento, lista_objetos, pos_automaticas):
@@ -8,9 +8,7 @@ def crear_objetos(cantidadObjetos, entrenamiento, lista_objetos, pos_automaticas
     limite_2 = 10
   
     if cantidadObjetos > 0:
-
         for i in range(cantidadObjetos):
-
             if pos_automaticas == True:
                 x = random.uniform(limite_1, limite_2)
                 y = random.uniform(limite_1, limite_2)
@@ -30,15 +28,21 @@ def crear_objetos(cantidadObjetos, entrenamiento, lista_objetos, pos_automaticas
                 
             if entrenamiento == True:
                 sumatoria = x + y + z
-                if sumatoria > 0:
-                    obj = objeto(x, y, z, 0, (255, 0, 0))
+                
+                # NUEVA LÓGICA DE 3 CLASES
+                if sumatoria > 5:
+                    obj = objeto(x, y, z, 0, (255, 0, 0))      # Rojo
+                elif sumatoria < -5:
+                    obj = objeto(x, y, z, 2, (0, 0, 255))      # Azul
                 else:
-                    obj = objeto(x, y, z, 1, (0, 0, 255))
+                    obj = objeto(x, y, z, 1, (0, 255, 0))      # Verde
             else:    
-                obj = objeto(x, y, z,None,(0, 0, 0))
+                obj = objeto(x, y, z, None, (0, 0, 0))
+            
             lista_objetos.append(obj)
     else:
         print("No fue posible realizar esta accion por que el valor ingresado es menor a 1")
+
 
 #Funcion para crear cantidad n de objetos--------------------------------------------------------------
 def crear_multiples_objetos(perceptron, arreglo):
@@ -89,3 +93,38 @@ def limite_de_rangos(rango_1, rango_2, posX, posY, posZ):
         return True
     else:
         return False
+    
+
+def generar_nube(cantidad, media, desviacion, distribucion):
+    lista_objetos = []
+    
+    for i in range(cantidad):
+        if distribucion == "normal":
+            x = np.random.normal(media, desviacion)
+            y = np.random.normal(media, desviacion)
+            z = np.random.normal(media, desviacion)
+        elif distribucion == "uniforme":
+            x = np.random.uniform(media - desviacion, media + desviacion)
+            y = np.random.uniform(media - desviacion, media + desviacion)
+            z = np.random.uniform(media - desviacion, media + desviacion)
+        elif distribucion == "exponencial":
+            x = np.random.exponential(desviacion) + media
+            y = np.random.exponential(desviacion) + media
+            z = np.random.exponential(desviacion) + media
+
+        sumatoria = x + y + z
+        
+        if sumatoria > 5:
+            color = (255, 0, 0)      # Rojo
+            clase = 0
+        elif sumatoria < -5:
+            color = (0, 0, 255)      # Azul
+            clase = 2
+        else:
+            color = (0, 255, 0)      # Verde
+            clase = 1
+    
+        obj = objeto(x, y, z, clase, color)
+        lista_objetos.append(obj)
+
+    return lista_objetos
