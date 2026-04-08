@@ -95,7 +95,13 @@ def limite_de_rangos(rango_1, rango_2, posX, posY, posZ):
         return False
     
 
-def generar_nube(cantidad, media, desviacion, distribucion):
+COLORES_CLASES = {
+    0: (255, 0, 0),   # Rojo
+    1: (0, 255, 0),   # Verde
+    2: (0, 0, 255),   # Azul
+}
+
+def generar_nube(cantidad, media, desviacion, distribucion, clase=None):
     lista_objetos = []
     
     for i in range(cantidad):
@@ -112,19 +118,22 @@ def generar_nube(cantidad, media, desviacion, distribucion):
             y = np.random.exponential(desviacion) + media
             z = np.random.exponential(desviacion) + media
 
-        sumatoria = x + y + z
-        
-        if sumatoria > 5:
-            color = (255, 0, 0)      # Rojo
-            clase = 0
-        elif sumatoria < -5:
-            color = (0, 0, 255)      # Azul
-            clase = 2
+        if clase is not None:
+            obj_clase = clase
+            color = COLORES_CLASES.get(clase, (128, 128, 128))
         else:
-            color = (0, 255, 0)      # Verde
-            clase = 1
+            sumatoria = x + y + z
+            if sumatoria > 5:
+                color = (255, 0, 0)      # Rojo
+                obj_clase = 0
+            elif sumatoria < -5:
+                color = (0, 0, 255)      # Azul
+                obj_clase = 2
+            else:
+                color = (0, 255, 0)      # Verde
+                obj_clase = 1
     
-        obj = objeto(x, y, z, clase, color)
+        obj = objeto(x, y, z, obj_clase, color)
         lista_objetos.append(obj)
 
     return lista_objetos

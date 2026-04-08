@@ -5,12 +5,16 @@ import utilidades as funciones
 
 app = Flask(__name__)
 lista_objetos = []
+num_clases = 2
+clases_con_nube = set()
 
 neurona = Perceptron(0.1, 1000)
 
 @app.route('/crear_objetos_entrenamiento', methods=['GET'])
 def crear_objetos_entrenamiento():
+    global lista_objetos, clases_con_nube
     lista_objetos.clear()
+    clases_con_nube.clear()
     
     funciones.crear_objetos(300, True, lista_objetos, True)
     lista_obj_entrenamiento = []
@@ -67,21 +71,48 @@ def plano2():
     })
 
 
+@app.route('/set_num_clases', methods=['POST'])
+def set_num_clases():
+    global num_clases, clases_con_nube, lista_objetos
+    data = request.json
+    num_clases = int(data['num_clases'])
+    clases_con_nube.clear()
+    lista_objetos.clear()
+    return jsonify({
+        "mensaje": f"Número de clases establecido a {num_clases}",
+        "num_clases": num_clases
+    })
+
+
 @app.route('/generar_nube', methods=['POST'])
 def generar_nube():
-    global lista_objetos
-    lista_objetos.clear()
+    global lista_objetos, clases_con_nube
 
     data = request.json
+    clase = data.get('clase', None)
+    if clase is not None:
+        clase = int(clase)
     cantidad = int(data['cantidad'])
-    media = float(data['media'])
-    desviacion = float(data['desviacion'])
+    media = float(str(data['media']).replace(',', '.'))
+    desviacion = float(str(data['desviacion']).replace(',', '.'))
     distribucion = data['distribucion']
 
-    lista_objetos = funciones.generar_nube(cantidad, media, desviacion, distribucion)
+    if clase is None:
+        # Comportamiento anterior: reemplazar todos los objetos con asignación automática
+        lista_objetos.clear()
+        clases_con_nube.clear()
+        nuevos_objetos = funciones.generar_nube(cantidad, media, desviacion, distribucion)
+        lista_objetos.extend(nuevos_objetos)
+        for obj in nuevos_objetos:
+            clases_con_nube.add(obj.clase)
+    else:
+        # Nuevo comportamiento: agregar objetos de la clase indicada sin borrar las demás
+        nuevos_objetos = funciones.generar_nube(cantidad, media, desviacion, distribucion, clase)
+        lista_objetos.extend(nuevos_objetos)
+        clases_con_nube.add(clase)
 
     lista_obj_nube = []
-    for obj in lista_objetos:
+    for obj in nuevos_objetos:
         lista_obj_nube.append({
             "x": obj.posX,
             "y": obj.posY,
@@ -90,7 +121,26 @@ def generar_nube():
             "color": obj.color
         })
 
-    return jsonify({"objetos": lista_obj_nube})
+    nubes_completas = len(clases_con_nube) >= num_clases
+
+    return jsonify({
+        "objetos": lista_obj_nube,
+        "clases_con_nube": list(clases_con_nube),
+        "nubes_completas": nubes_completas,
+        "num_clases_requeridas": num_clases
+    })
+
+
+@app.route('/reset_nubes', methods=['POST'])
+def reset_nubes():
+    global lista_objetos, clases_con_nube
+    lista_objetos.clear()
+    clases_con_nube.clear()
+    return jsonify({
+        "mensaje": "Nubes reiniciadas",
+        "clases_con_nube": [],
+        "nubes_completas": False
+    })
 
 
 if __name__ == '__main__':
